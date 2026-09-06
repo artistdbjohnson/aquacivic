@@ -4,90 +4,84 @@ const INFLIGHT = new Set();
 const HISTORY = {};
 const LANG_KEY = "aquacivic-lang";
 
-const COPY = {
+const I18N = {
   pt: {
     htmlLang: "pt-PT",
     title: "AquaCivic · Consola Municipal de Rega",
     brandSub: "Consola",
     brandLoc: "Faro · Smart irrigation",
-    gate: "Gateway online · LoRaWAN C",
-    sim: "Simulador no browser — mesma regra GSSIC: caudal > 120 L/min com eletroválvula fechada. Latência de hardware 1s.",
-    leakTitle: "Fuga crítica detectada — caudal > 120 L/min com eletroválvula fechada.",
+    gate: "GW · LoRa C",
+    simNote: "Simulador no browser — mesma regra GSSIC: caudal > 120 L/min com eletroválvula fechada. Latência de hardware 1s.",
+    leakBanner: "Fuga crítica detectada — caudal > 120 L/min com eletroválvula fechada.",
     leakHint: "Verificar sector e gateway LoRaWAN.",
-    health: { normal: "Normal", watering: "A regar", leak: "Fuga crítica" },
     flow: "Caudal",
     moisture: "Humidade",
     valve: "Válvula",
-    valveOpen: "ABERTA",
-    valveClosed: "FECHADA",
+    open: "ABERTA",
+    closed: "FECHADA",
+    valveOpen: "Eletroválvula aberta",
+    valveClosed: "Eletroválvula fechada",
     override: "Override de hardware",
-    valveOpenLong: "Eletroválvula aberta",
-    valveClosedLong: "Eletroválvula fechada",
-    sending: "A enviar comando…",
-    acknowledged: "Hardware confirmou",
-    updated: "Estado atualizado"
+    health: { normal: "Normal", watering: "A regar", leak: "Fuga crítica" },
+    phase: { sending: "A enviar comando…", acknowledged: "Hardware confirmou", updated: "Estado atualizado" }
   },
   en: {
     htmlLang: "en",
     title: "AquaCivic · Municipal Irrigation Console",
     brandSub: "Console",
     brandLoc: "Faro · Smart irrigation",
-    gate: "Gateway online · LoRaWAN C",
-    sim: "In-browser simulator — same GSSIC rule: flow > 120 L/min with the valve closed. Hardware latency 1s.",
-    leakTitle: "Critical leak detected — flow > 120 L/min with the valve closed.",
+    gate: "GW · LoRa C",
+    simNote: "In-browser simulator — same GSSIC rule: flow > 120 L/min with the valve closed. Hardware latency 1s.",
+    leakBanner: "Critical leak detected — flow > 120 L/min with the valve closed.",
     leakHint: "Check the sector and LoRaWAN gateway.",
-    health: { normal: "Normal", watering: "Watering", leak: "Critical leak" },
     flow: "Flow",
     moisture: "Moisture",
     valve: "Valve",
-    valveOpen: "OPEN",
-    valveClosed: "CLOSED",
+    open: "OPEN",
+    closed: "CLOSED",
+    valveOpen: "Solenoid valve open",
+    valveClosed: "Solenoid valve closed",
     override: "Hardware override",
-    valveOpenLong: "Solenoid valve open",
-    valveClosedLong: "Solenoid valve closed",
-    sending: "Sending command…",
-    acknowledged: "Hardware acknowledged",
-    updated: "State updated"
+    health: { normal: "Normal", watering: "Watering", leak: "Critical leak" },
+    phase: { sending: "Sending command…", acknowledged: "Hardware acknowledged", updated: "State updated" }
   }
 };
 
-function readLang() {
+function currentLang() {
   try {
     var stored = localStorage.getItem(LANG_KEY);
     if (stored === "en" || stored === "pt") return stored;
-  } catch (err) {}
+  } catch (e) {}
   return "pt";
 }
 
-var lang = readLang();
+var lang = currentLang();
+function t() { return I18N[lang] || I18N.pt; }
 
-function copy() {
-  return COPY[lang] || COPY.pt;
-}
-
-function setLang(next) {
-  lang = next === "en" ? "en" : "pt";
-  try { localStorage.setItem(LANG_KEY, lang); } catch (err) {}
-  applyChrome();
-  render();
-}
-
-function applyChrome() {
-  var c = copy();
-  document.documentElement.lang = c.htmlLang;
-  document.title = c.title;
-  var brandSub = document.getElementById("brand-sub");
-  var brandLoc = document.getElementById("brand-loc");
+function applyStaticCopy() {
+  var copy = t();
+  document.documentElement.lang = copy.htmlLang;
+  document.title = copy.title;
+  var sub = document.getElementById("brand-sub");
+  var loc = document.getElementById("brand-loc");
   var gate = document.getElementById("gate-label");
   var note = document.getElementById("sim-note");
-  if (brandSub) brandSub.textContent = c.brandSub;
-  if (brandLoc) brandLoc.textContent = c.brandLoc;
-  if (gate) gate.textContent = c.gate;
-  if (note) note.textContent = c.sim;
-  var buttons = document.querySelectorAll(".lang-btn");
+  if (sub) sub.textContent = copy.brandSub;
+  if (loc) loc.textContent = copy.brandLoc;
+  if (gate) gate.textContent = copy.gate;
+  if (note) note.textContent = copy.simNote;
+  var buttons = document.querySelectorAll("[data-lang]");
   for (var i = 0; i < buttons.length; i++) {
     buttons[i].setAttribute("aria-pressed", buttons[i].getAttribute("data-lang") === lang ? "true" : "false");
   }
+}
+
+function setLang(next) {
+  if (next !== "en" && next !== "pt") return;
+  lang = next;
+  try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+  applyStaticCopy();
+  render();
 }
 
 const SEED = [
@@ -120,13 +114,23 @@ const zones = SEED.map(function (s) {
   };
 });
 
+function uniqueZones() {
+  var seen = {};
+  var out = [];
+  for (var i = 0; i < zones.length; i++) {
+    var z = zones[i];
+    if (!z || !z.id || seen[z.id]) continue;
+    seen[z.id] = 1;
+    out.push(z);
+  }
+  return out;
+}
+
 function healthOf(z) {
   if (z.telemetry.leak_detected) return "leak";
   if (z.telemetry.valve_status) return "watering";
   return "normal";
 }
-
-var pulse = { normal: "pulse-ok", watering: "pulse-water", leak: "pulse-leak" };
 
 function seedHistory(z) {
   var rows = [];
@@ -148,11 +152,12 @@ function seedHistory(z) {
   }
   HISTORY[z.id] = rows;
 }
-zones.forEach(seedHistory);
+uniqueZones().forEach(seedHistory);
 
 function tick() {
-  for (var i = 0; i < zones.length; i++) {
-    var z = zones[i];
+  var list = uniqueZones();
+  for (var i = 0; i < list.length; i++) {
+    var z = list[i];
     var prev = z.telemetry;
     var wobble = Math.sin((Date.now() / 60000) * Math.PI * 2) * 3;
     var flow, moisture;
@@ -198,102 +203,109 @@ function toggle(z) {
 
 function spark(samples, leak) {
   var slice = samples.slice(-48);
-  if (slice.length < 2) return "";
-  var values = slice.map(function (s) { return s.flow_rate_lpm; });
-  var min = Math.min.apply(null, values.concat([0]));
-  var max = Math.max.apply(null, values.concat([150]));
-  var span = Math.max(max - min, 1);
   var w = 240;
-  var h = 48;
-  var d = values.map(function (v, i) {
-    var x = (i / (values.length - 1)) * w;
-    var y = h - ((v - min) / span) * (h - 4) - 2;
-    return (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1);
-  }).join(" ");
-  var color = leak ? "#f87171" : "#7dd3fc";
-  return '<svg viewBox="0 0 ' + w + " " + h + '" class="h-12 w-full" aria-hidden="true"><path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="1.6"/></svg>';
+  var h = 44;
+  var min = 0;
+  var max = 150;
+  var span = max - min;
+  var color = leak ? "#c45a3c" : "#7d9a7a";
+  var d = "";
+  var fill = "";
+  if (slice.length >= 2) {
+    d = slice.map(function (s, i) {
+      var x = (i / (slice.length - 1)) * w;
+      var y = h - ((s.flow_rate_lpm - min) / span) * (h - 6) - 3;
+      return (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1);
+    }).join(" ");
+    var last = slice[slice.length - 1];
+    var lastX = w;
+    fill = d + " L" + lastX.toFixed(1) + "," + h + " L0," + h + " Z";
+  }
+  var threshY = h - ((LEAK - min) / span) * (h - 6) - 3;
+  return (
+    '<svg viewBox="0 0 ' + w + " " + h + '" class="spark" aria-hidden="true">' +
+    '<line x1="0" y1="' + threshY.toFixed(1) + '" x2="' + w + '" y2="' + threshY.toFixed(1) + '" stroke="rgba(196,90,60,0.35)" stroke-width="1" stroke-dasharray="3 3"></line>' +
+    (fill ? '<path d="' + fill + '" fill="' + color + '" fill-opacity="0.12"></path>' : "") +
+    (d ? '<path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="1.4"></path>' : "") +
+    "</svg>"
+  );
 }
 
 function render() {
-  var c = copy();
-  var leaking = zones.filter(function (z) { return z.telemetry.leak_detected; });
+  var copy = t();
+  var list = uniqueZones();
+  var leaking = list.filter(function (z) { return z.telemetry.leak_detected; });
   var banner = document.getElementById("banner");
-  banner.innerHTML = leaking.length
-    ? '<div role="alert" class="glass border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100"><p class="font-medium">' +
-      c.leakTitle +
-      '</p><p class="text-red-200/80">' +
-      leaking.map(function (z) { return z.name; }).join(" · ") +
-      ". " +
-      c.leakHint +
-      "</p></div>"
-    : "";
+  if (banner) {
+    banner.innerHTML = leaking.length
+      ? '<div class="banner" role="alert"><strong>' + copy.leakBanner + "</strong><span>" + leaking.map(function (z) { return z.name; }).join(" · ") + ". " + copy.leakHint + "</span></div>"
+      : "";
+  }
 
-  document.getElementById("grid").innerHTML = zones.map(function (z) {
+  var grid = document.getElementById("grid");
+  if (!grid) return;
+  grid.innerHTML = list.map(function (z) {
     var h = healthOf(z);
     var tel = z.telemetry;
     var phase = PHASES[z.id] || "idle";
     var open = tel.valve_status;
     var busy = phase !== "idle";
-    var phaseText = phase === "sending" ? c.sending : phase === "acknowledged" ? c.acknowledged : phase === "updated" ? c.updated : "";
+    var cardClass = "card" + (h === "leak" ? " is-leak" : h === "watering" ? " is-water" : "");
     return (
-      '<article class="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#0d0d0d] p-5">' +
-      '<header class="flex items-start justify-between gap-3"><div>' +
-      '<h2 class="text-lg font-medium tracking-tight">' + z.name + "</h2>" +
-      '<p class="mt-1 font-mono text-[11px] text-white/40">' + z.device_id + "</p></div>" +
-      '<span class="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-white/70">' +
-      '<span class="h-2.5 w-2.5 rounded-full animate-pulse ' + pulse[h] + '"></span>' + c.health[h] +
-      "</span></header>" +
-      '<dl class="grid grid-cols-3 gap-3 text-sm">' +
-      '<div class="rounded-xl bg-white/[0.03] px-3 py-2"><dt class="text-[10px] uppercase tracking-[0.16em] text-white/40">' +
-      c.flow +
-      '</dt><dd class="mt-1 font-medium tabular-nums ' +
-      (tel.flow_rate_lpm > 120 ? "text-red-400" : "") +
-      '">' + tel.flow_rate_lpm.toFixed(1) + ' <span class="text-[11px] font-normal text-white/40">L/min</span></dd></div>' +
-      '<div class="rounded-xl bg-white/[0.03] px-3 py-2"><dt class="text-[10px] uppercase tracking-[0.16em] text-white/40">' +
-      c.moisture +
-      '</dt><dd class="mt-1 font-medium tabular-nums">' +
-      tel.moisture_level.toFixed(0) +
-      ' <span class="text-[11px] font-normal text-white/40">%</span></dd></div>' +
-      '<div class="rounded-xl bg-white/[0.03] px-3 py-2"><dt class="text-[10px] uppercase tracking-[0.16em] text-white/40">' +
-      c.valve +
-      '</dt><dd class="mt-1 font-medium">' +
-      (open ? c.valveOpen : c.valveClosed) +
-      "</dd></div></dl>" +
-      spark(HISTORY[z.id] || [], tel.leak_detected) +
-      '<div class="flex items-center justify-between gap-3"><div>' +
-      '<p class="text-[11px] uppercase tracking-[0.16em] text-white/45">' + c.override + "</p>" +
-      '<p class="mt-0.5 text-sm text-white/80">' + (open ? c.valveOpenLong : c.valveClosedLong) + "</p>" +
-      (busy ? '<p class="mt-1 text-xs text-sky-300">' + phaseText + "</p>" : "") +
+      '<article class="' + cardClass + '">' +
+      '<header class="card-head"><div>' +
+      "<h2>" + z.name + "</h2>" +
+      '<p class="id">' + z.device_id + "</p></div>" +
+      '<span class="status ' + h + '"><i></i>' + copy.health[h] + "</span></header>" +
+      '<dl class="metrics">' +
+      "<div><dt>" + copy.flow + '</dt><dd class="' + (tel.flow_rate_lpm > 120 ? "hot" : "") + '">' + tel.flow_rate_lpm.toFixed(1) + '<span class="unit">L/min</span></dd></div>' +
+      "<div><dt>" + copy.moisture + "</dt><dd>" + tel.moisture_level.toFixed(0) + '<span class="unit">%</span></dd></div>' +
+      "<div><dt>" + copy.valve + "</dt><dd>" + (open ? copy.open : copy.closed) + "</dd></div>" +
+      "</dl>" +
+      '<div class="spark-wrap">' + spark(HISTORY[z.id] || [], tel.leak_detected) + "</div>" +
+      '<div class="foot"><div>' +
+      '<p class="k">' + copy.override + "</p>" +
+      '<p class="v">' + (open ? copy.valveOpen : copy.valveClosed) + "</p>" +
+      (busy ? '<p class="phase">' + copy.phase[phase] + "</p>" : "") +
       "</div>" +
-      '<button type="button" data-toggle="' + z.id + '" ' + (busy ? "disabled" : "") +
-      ' aria-pressed="' + open + '" class="relative h-7 w-12 rounded-full ' +
-      (open ? "bg-sky-500" : "bg-white/15") + (busy ? " opacity-60" : "") +
-      '"><span class="absolute top-0.5 h-6 w-6 rounded-full bg-white shadow" style="transform:translateX(' +
-      (open ? "1.25rem" : "0.125rem") +
-      ');transition:transform .2s"></span></button></div></article>'
+      '<button type="button" class="sw" data-toggle="' + z.id + '" ' + (busy ? "disabled" : "") +
+      ' aria-pressed="' + open + '"><span></span></button></div></article>'
     );
   }).join("");
-
-  var buttons = document.querySelectorAll("[data-toggle]");
-  for (var b = 0; b < buttons.length; b++) {
-    buttons[b].addEventListener("click", function () {
-      var id = this.getAttribute("data-toggle");
-      for (var i = 0; i < zones.length; i++) if (zones[i].id === id) toggle(zones[i]);
-    });
-  }
 }
 
-function bindLang() {
-  var buttons = document.querySelectorAll(".lang-btn");
-  for (var i = 0; i < buttons.length; i++) {
-    buttons[i].addEventListener("click", function () {
-      setLang(this.getAttribute("data-lang"));
-    });
-  }
+function bindGrid() {
+  var grid = document.getElementById("grid");
+  if (!grid || grid.getAttribute("data-bound") === "1") return;
+  grid.setAttribute("data-bound", "1");
+  grid.addEventListener("click", function (e) {
+    var btn = e.target;
+    while (btn && btn !== grid && !(btn.getAttribute && btn.getAttribute("data-toggle"))) {
+      btn = btn.parentNode;
+    }
+    if (!btn || btn === grid || btn.disabled) return;
+    var id = btn.getAttribute("data-toggle");
+    var list = uniqueZones();
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) toggle(list[i]);
+    }
+  });
 }
 
-applyChrome();
-bindLang();
+if (!window.__aquacivicBound) {
+  window.__aquacivicBound = true;
+  document.querySelectorAll("[data-lang]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      setLang(btn.getAttribute("data-lang"));
+    });
+  });
+}
+
+applyStaticCopy();
+bindGrid();
 render();
-setInterval(tick, 5000);
+if (!window.__aquacivicTick) {
+  window.__aquacivicTick = true;
+  setInterval(tick, 5000);
+}
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");

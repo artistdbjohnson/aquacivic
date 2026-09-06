@@ -208,7 +208,7 @@ function spark(samples, leak) {
   var min = 0;
   var max = 150;
   var span = max - min;
-  var color = leak ? "#c45a3c" : "#7d9a7a";
+  var color = leak ? "#c45a3c" : "#1a6fb5";
   var d = "";
   var fill = "";
   if (slice.length >= 2) {
@@ -225,7 +225,7 @@ function spark(samples, leak) {
   return (
     '<svg viewBox="0 0 ' + w + " " + h + '" class="spark" aria-hidden="true">' +
     '<line x1="0" y1="' + threshY.toFixed(1) + '" x2="' + w + '" y2="' + threshY.toFixed(1) + '" stroke="rgba(196,90,60,0.35)" stroke-width="1" stroke-dasharray="3 3"></line>' +
-    (fill ? '<path d="' + fill + '" fill="' + color + '" fill-opacity="0.12"></path>' : "") +
+    (fill ? '<path d="' + fill + '" fill="' + color + '" fill-opacity="0.16"></path>' : "") +
     (d ? '<path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="1.4"></path>' : "") +
     "</svg>"
   );

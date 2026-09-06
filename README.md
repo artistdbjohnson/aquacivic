@@ -1,11 +1,31 @@
 # AquaCivic
 
-Municipal smart-irrigation operator console for Faro. Portfolio spec aimed at Visualforma / SmartConnect.
+Municipal smart-irrigation operator console for Faro. Browser LoRaWAN simulator, leak rule (`flow > 120 L/min` with valve closed), 1s hardware-override latency, installable PWA.
 
-**Live PWA:** https://aquacivic.vercel.app
+## Live
 
-Install from the browser (Add to Home Screen). Rotunda do Aeroporto boots in leak state. Toggle Parque Ribeirinho and watch `Sending Command…` → `Hardware Acknowledged` → `State Updated` (1s hardware latency, no optimistic UI).
+Shareable PWA: https://faro-civic-pwa.vercel.app
 
-Leak rule: `flow_rate_lpm > 120 AND valve closed` (despiste de roturas).
+Repo: https://github.com/artistdbjohnson/aquacivic
 
-The public Vercel build is a standalone PWA with an in-browser LoRaWAN simulator so recruiters need nothing installed. The FastAPI engine and typed React components live under `/backend` and `/frontend` in the workspace for the architecture artifact.
+## Stack
+
+Static PWA — IBM Plex Sans + Instrument Serif, olive municipal console, in-browser simulator, `manifest.json`, service worker `aquacivic-v6`. No build step.
+
+## Zones
+
+- Jardim Manuel Bívar — idle
+- Parque Ribeirinho — watering
+- Rotunda do Aeroporto — leak latched on load
+
+Toggle a valve to walk Sending → Hardware Acknowledged → State Updated.
+
+PT / EN toggle persists in localStorage.
+
+## Local
+
+```bash
+python3 -m http.server 4173
+```
+
+Open http://localhost:4173

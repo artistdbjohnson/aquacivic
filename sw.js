@@ -1,4 +1,4 @@
-const CACHE = "aquacivic-v6";
+const CACHE = "aquacivic-v7";
 const SHELL = ["/", "/index.html", "/app.js", "/manifest.json"];
 
 self.addEventListener("install", (event) => {

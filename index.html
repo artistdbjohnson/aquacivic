@@ -3,11 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#d7e7f2" />
+    <meta name="theme-color" content="#e8f1f7" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="AquaCivic" />
-    <meta name="description" content="Municipal smart-irrigation operator console — Faro, LoRaWAN, leak detection." />
+    <meta name="description" content="Municipal irrigation operator console — Faro, LoRaWAN, leak detection." />
     <title>AquaCivic · Consola Municipal de Rega</title>
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" href="/icons/icon-192.png" />
@@ -15,352 +15,156 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif&display=swap" rel="stylesheet" />
     <style>
-      /* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V4 */
       :root {
-        --ink: #f4f8fc;
-        --wash: rgba(26, 111, 181, 0.14);
-        --paper: rgba(255, 255, 255, 0.72);
-        --paper-solid: #ffffff;
-        --line: rgba(11, 31, 51, 0.10);
-        --line-strong: rgba(11, 31, 51, 0.18);
+        --ink: #eef4f8;
+        --paper: #ffffff;
         --text: #0b1f33;
         --muted: #4a657c;
         --faint: #7a93a8;
+        --line: rgba(11, 31, 51, 0.10);
         --water: #1a6fb5;
-        --water-2: #2b8fd4;
+        --water-2: #7eb6e0;
         --leak: #c45a3c;
-        --ok: #2a8f6e;
-        --frost: blur(18px) saturate(1.25);
+        --ok: #2f7f9a;
+        --track: #d7e7f2;
         --serif: "Instrument Serif", Georgia, serif;
         --sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
         --mono: "IBM Plex Mono", ui-monospace, monospace;
       }
       * { box-sizing: border-box; }
       html, body {
-        margin: 0;
-        min-height: 100%;
-        background: var(--ink);
-        color: var(--text);
-        font-family: var(--sans);
-        -webkit-font-smoothing: antialiased;
-        overflow-x: clip;
-      }
-      body {
-        background-image:
-          radial-gradient(90vw 46vh at 12% -8%, var(--wash), transparent 62%),
-          radial-gradient(70vw 36vh at 92% 8%, rgba(43, 143, 212, 0.10), transparent 58%),
-          linear-gradient(180deg, #e4eef6 0%, #f4f8fc 38%, #eef5fa 100%);
+        margin: 0; min-height: 100%; background: var(--ink); color: var(--text);
+        font-family: var(--sans); -webkit-font-smoothing: antialiased; overflow-x: clip;
       }
       button { font: inherit; color: inherit; }
-      button:focus-visible, .lang button:focus-visible, .sw:focus-visible {
-        outline: 2px solid var(--water);
-        outline-offset: 2px;
-      }
-      .serif { font-family: var(--serif); font-style: normal; }
-      .mono { font-family: var(--mono); }
-      .wrap {
-        width: min(1080px, calc(100% - 32px));
-        margin: 0 auto;
-      }
+      button:focus-visible { outline: 2px solid var(--water); outline-offset: 2px; }
+      .wrap { width: min(720px, calc(100% - 32px)); margin: 0 auto; }
       header.top {
-        padding: calc(14px + env(safe-area-inset-top)) 0 16px;
-        margin-bottom: 18px;
-        border-bottom: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.62);
+        padding: calc(12px + env(safe-area-inset-top)) 0 12px;
+        background: rgba(238, 244, 248, 0.72);
+        backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+        position: sticky; top: 0; z-index: 8;
       }
-      @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-        header.top, .lang, .gate, .card, .banner {
-          backdrop-filter: var(--frost);
-          -webkit-backdrop-filter: var(--frost);
-        }
-      }
-      .brand-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-      .mark {
-        width: 36px;
-        height: 36px;
-        display: grid;
-        place-items: center;
-        border: 1px solid var(--line-strong);
-        background: rgba(255, 255, 255, 0.7);
-        color: var(--water);
-        font-family: var(--mono);
-        font-size: 11px;
-        font-weight: 500;
-        letter-spacing: 0.04em;
-        flex: none;
-      }
-      .brand-name {
-        margin: 0;
-        font-size: 15px;
-        font-weight: 500;
-        letter-spacing: -0.02em;
-      }
+      header.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      .brand-name { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; }
       .brand-name span {
-        margin-left: 6px;
-        font-family: var(--serif);
-        font-style: normal;
-        color: var(--muted);
+        display: block; font-family: var(--serif); font-style: italic; font-weight: 400;
+        font-size: 13px; color: var(--muted);
       }
-      .brand-loc {
-        margin: 3px 0 0;
-        font-size: 10px;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: var(--faint);
-      }
-      .toolbar {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-top: 14px;
-      }
-      .lang, .gate, .card {
-        background: var(--paper);
-        border: 1px solid var(--line);
-        backdrop-filter: var(--frost);
-        -webkit-backdrop-filter: var(--frost);
-        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.65) inset, 0 10px 28px rgba(16, 52, 84, 0.06);
-      }
-      .lang {
-        display: flex;
-        flex: none;
-        overflow: hidden;
+      .toolbar { display: flex; gap: 6px; flex: none; }
+      .lang, .gate {
+        display: flex; align-items: center; min-height: 30px;
+        border: 1px solid var(--line); background: var(--paper); border-radius: 999px;
       }
       .lang button {
-        appearance: none;
-        border: 0;
-        background: transparent;
-        min-width: 40px;
-        min-height: 32px;
-        padding: 0 11px;
-        font-size: 10px;
-        font-weight: 500;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-        color: var(--faint);
+        appearance: none; border: 0; background: transparent; min-width: 36px; min-height: 30px;
+        font-size: 10px; font-weight: 600; letter-spacing: 0.12em; color: var(--faint); border-radius: 999px;
       }
-      .lang button[aria-pressed="true"] {
-        background: rgba(26, 111, 181, 0.12);
-        color: var(--text);
-      }
+      .lang button[aria-pressed="true"] { background: var(--water); color: #fff; }
       .gate {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        min-height: 32px;
-        padding: 0 11px;
-        font-size: 10px;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--muted);
-        white-space: nowrap;
-        overflow: hidden;
+        padding: 0 10px; gap: 6px; font-size: 10px; letter-spacing: 0.12em;
+        text-transform: uppercase; color: var(--muted); white-space: nowrap;
       }
-      .gate-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: var(--ok);
-        flex: none;
+      .gate-dot { width: 6px; height: 6px; border-radius: 50%; background: #3d9a78; flex: none; }
+      .hero { padding: 8px 0 4px; }
+      .hero-kicker {
+        margin: 0 0 6px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+        color: var(--water); font-weight: 600;
       }
-      .sim {
-        margin: 0 0 16px;
-        max-width: 46em;
-        font-size: 12px;
-        line-height: 1.45;
-        color: var(--faint);
+      .hero h1 { margin: 0 0 8px; font-size: 34px; line-height: 1.05; letter-spacing: -0.04em; font-weight: 600; }
+      .ring-wrap { position: relative; width: min(280px, 78vw); margin: 8px auto 6px; }
+      .ring-wrap svg { display: block; width: 100%; height: auto; }
+      .ring-center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
+      .ring-center strong { font-size: 40px; font-weight: 600; letter-spacing: -0.05em; line-height: 1; }
+      .ring-center span { margin-top: 4px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+      .hero-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 10px 0 16px; border-top: 1px solid var(--line); }
+      .hero-stats div { padding: 14px 8px 4px 0; }
+      .hero-stats div + div { padding-left: 16px; border-left: 1px solid var(--line); }
+      .hero-stats dt { margin: 0; font-size: 11px; color: var(--faint); }
+      .hero-stats dd { margin: 2px 0 0; font-size: 44px; font-weight: 600; letter-spacing: -0.05em; line-height: 1; }
+      .cycle { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0 0 18px; }
+      .cycle button {
+        appearance: none; border: 1px solid var(--line); background: var(--paper); border-radius: 999px;
+        min-height: 34px; padding: 0 6px; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
       }
-      .banner {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        margin: 0 0 16px;
-        padding: 10px 14px 11px 16px;
-        border: 1px solid rgba(196, 90, 60, 0.28);
-        border-left: 2px solid var(--leak);
-        background: rgba(196, 90, 60, 0.08);
-        color: #8a2f1f;
-        backdrop-filter: var(--frost);
-        -webkit-backdrop-filter: var(--frost);
+      .cycle button.is-on { background: var(--water); border-color: var(--water); color: #fff; }
+      .cycle button.is-alarm { background: var(--leak); border-color: var(--leak); color: #fff; }
+      .sim { margin: 0 0 14px; font-size: 12px; line-height: 1.45; color: var(--faint); }
+      .banner { margin: 0 0 14px; padding: 12px 14px; border-radius: 16px; background: rgba(196, 90, 60, 0.08); color: #7a2e1f; }
+      .banner strong { display: block; font-weight: 600; font-size: 13px; }
+      .banner span { display: block; margin-top: 3px; font-size: 12px; color: rgba(122,46,31,.75); }
+      .grid { display: grid; gap: 12px; padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
+      .card {
+        background: rgba(255, 255, 255, 0.74);
+        backdrop-filter: saturate(1.15) blur(18px); -webkit-backdrop-filter: saturate(1.15) blur(18px);
+        border: 1px solid rgba(255, 255, 255, 0.65); border-radius: 22px; padding: 18px 18px 14px; min-width: 0;
       }
-      .banner strong {
-        font-weight: 500;
-        font-size: 13px;
-      }
-      .banner span {
-        font-size: 12px;
-        color: rgba(138, 47, 31, 0.78);
-      }
-      .grid {
-        display: grid;
-        gap: 14px;
-        padding-bottom: calc(28px + env(safe-area-inset-bottom));
-      }
-      @media (min-width: 760px) {
-        .grid { grid-template-columns: 1fr 1fr; }
-        header.top .wrap {
-          display: flex;
-          align-items: flex-end;
-          justify-content: space-between;
-          gap: 16px;
-        }
-        .toolbar { margin-top: 0; }
-      }
-      @media (min-width: 1100px) {
-        .grid { grid-template-columns: 1fr 1fr 1fr; }
-      }
-      .card { min-width: 0; }
-      .card.is-leak {
-        border-color: rgba(196, 90, 60, 0.34);
-        border-left: 2px solid var(--leak);
-        background: linear-gradient(90deg, rgba(196, 90, 60, 0.10), var(--paper) 32%);
-      }
-      .card.is-water { border-left: 2px solid var(--water); }
-      .card-head {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 16px 16px 12px;
-      }
-      .card-head h2 {
-        margin: 0;
-        font-family: var(--serif);
-        font-style: normal;
-        font-weight: 400;
-        font-size: 22px;
-        line-height: 1.15;
-        letter-spacing: -0.02em;
-        overflow-wrap: anywhere;
-      }
-      .card-head .id {
-        margin: 5px 0 0;
-        font-family: var(--mono);
-        font-size: 10px;
-        color: var(--faint);
-      }
-      .status {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        margin-top: 4px;
-        font-size: 10px;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-        color: var(--muted);
-        white-space: nowrap;
-      }
-      .status i {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: var(--ok);
-        display: block;
-      }
+      .card.is-leak { box-shadow: inset 3px 0 0 var(--leak); }
+      .card.is-water { box-shadow: inset 3px 0 0 var(--water); }
+      .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+      .card-head h2 { margin: 0; font-family: var(--serif); font-style: normal; font-weight: 400; font-size: 26px; line-height: 1.1; letter-spacing: -0.03em; }
+      .card-head .id { margin: 4px 0 0; font-family: var(--mono); font-size: 10px; color: var(--faint); }
+      .status { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+      .status i { display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--ok); }
       .status.watering i { background: var(--water); }
       .status.leak i { background: var(--leak); }
-      .metrics {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        border-top: 1px solid var(--line);
-        border-bottom: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.38);
-      }
-      .metrics div { padding: 12px 14px 13px; }
-      .metrics div + div { border-left: 1px solid var(--line); }
-      .metrics dt {
-        margin: 0;
-        font-size: 9px;
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
-        color: var(--faint);
-      }
-      .metrics dd {
-        margin: 6px 0 0;
-        font-variant-numeric: tabular-nums;
-        font-size: 20px;
-        font-weight: 500;
-        letter-spacing: -0.03em;
-      }
-      .metrics .unit {
-        margin-left: 3px;
-        font-size: 10px;
-        font-weight: 400;
-        color: var(--faint);
-      }
-      .metrics .hot { color: var(--leak); }
-      .spark-wrap { padding: 10px 14px 4px; }
-      .spark-wrap svg { display: block; width: 100%; height: 44px; }
-      .foot {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 12px 14px 14px;
-      }
+      .hero-metric { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 4px 0 8px; }
+      .hero-metric .num { font-size: 48px; font-weight: 600; letter-spacing: -0.05em; line-height: 0.9; }
+      .hero-metric .num.hot { color: var(--leak); }
+      .hero-metric .unit { display: block; margin-top: 6px; font-size: 11px; font-weight: 400; color: var(--faint); letter-spacing: 0.08em; text-transform: uppercase; }
+      .spark-wrap { width: 42%; flex: none; }
+      .spark-wrap svg { display: block; width: 100%; height: 48px; }
+      .metrics { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); margin-top: 6px; }
+      .metrics div { padding: 12px 0 8px; }
+      .metrics div + div { padding-left: 16px; border-left: 1px solid var(--line); }
+      .metrics dt { margin: 0; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
+      .metrics dd { margin: 4px 0 0; font-size: 20px; font-weight: 600; letter-spacing: -0.03em; }
+      .foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 8px; }
       .foot p { margin: 0; }
-      .foot .k {
-        font-size: 9px;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: var(--faint);
-      }
-      .foot .v { margin-top: 4px; font-size: 13px; color: var(--text); }
-      .foot .phase { margin-top: 4px; font-size: 12px; color: var(--water); }
-      .sw {
-        appearance: none;
-        position: relative;
-        width: 48px;
-        height: 28px;
-        border: 0;
-        border-radius: 999px;
-        background: #c9d7e3;
-        flex: none;
-      }
+      .foot .k { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
+      .foot .v { margin-top: 3px; font-size: 13px; }
+      .foot .phase { margin-top: 3px; font-size: 12px; color: var(--water); }
+      .sw { appearance: none; position: relative; width: 52px; height: 32px; border: 0; border-radius: 999px; background: #d3dee8; flex: none; }
       .sw[aria-pressed="true"] { background: var(--water); }
       .sw:disabled { opacity: 0.5; }
-      .sw span {
-        position: absolute;
-        top: 3px;
-        left: 3px;
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-        background: #fff;
-        box-shadow: 0 1px 2px rgba(11, 31, 51, 0.18);
-        transition: transform 0.2s ease;
-      }
+      .sw span { position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(11,31,51,.18); transition: transform .2s ease; }
       .sw[aria-pressed="true"] span { transform: translateX(20px); }
     </style>
   </head>
   <body>
     <header class="top">
       <div class="wrap">
-      <div class="brand-row">
-        <span class="mark">AC</span>
-        <div>
-          <p class="brand-name">AquaCivic <span id="brand-sub">Consola</span></p>
-          <p id="brand-loc" class="brand-loc">Faro · Smart irrigation</p>
+        <p class="brand-name">AquaCivic <span id="brand-sub">Dos dados ao painel</span></p>
+        <div class="toolbar">
+          <div class="lang" role="group" aria-label="Language">
+            <button type="button" data-lang="pt" aria-pressed="true">PT</button>
+            <button type="button" data-lang="en" aria-pressed="false">EN</button>
+          </div>
+          <div class="gate" title="Gateway online · LoRaWAN Class C">
+            <span class="gate-dot"></span>
+            <span id="gate-label">GW · LoRa C</span>
+          </div>
         </div>
-      </div>
-      <div class="toolbar">
-        <div class="lang" role="group" aria-label="Language">
-          <button type="button" data-lang="pt" aria-pressed="true">PT</button>
-          <button type="button" data-lang="en" aria-pressed="false">EN</button>
-        </div>
-        <div class="gate" title="Gateway online · LoRaWAN Class C">
-          <span class="gate-dot"></span>
-          <span id="gate-label">GW · LoRa C</span>
-        </div>
-      </div>
       </div>
     </header>
     <main class="wrap">
-      <p id="sim-note" class="sim">Simulador no browser — mesma regra GSSIC: caudal &gt; 120 L/min com eletroválvula fechada. Latência de hardware 1s.</p>
+      <section class="hero">
+        <p id="hero-kicker" class="hero-kicker">Dados em tempo real</p>
+        <h1 id="hero-title">Os sectores</h1>
+        <div class="ring-wrap">
+          <div id="ring"></div>
+          <div class="ring-center">
+            <strong id="ring-num">3</strong>
+            <span id="ring-label">sectores</span>
+          </div>
+        </div>
+        <dl class="hero-stats">
+          <div><dt id="stat-water-l">A regar</dt><dd id="stat-water">1</dd></div>
+          <div><dt id="stat-leak-l">Fugas</dt><dd id="stat-leak">1</dd></div>
+        </dl>
+        <nav class="cycle" id="cycle" aria-label="Cycle"></nav>
+      </section>
+      <p id="sim-note" class="sim"></p>
       <div id="banner"></div>
       <section id="grid" class="grid"></section>
     </main>

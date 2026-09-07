@@ -1,173 +1,145 @@
 <!doctype html>
 <html lang="pt-PT">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#e8f1f7" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="AquaCivic" />
-    <meta name="description" content="Municipal irrigation operator console — Faro, LoRaWAN, leak detection." />
-    <title>AquaCivic · Consola Municipal de Rega</title>
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="icon" href="/icons/icon-192.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif&display=swap" rel="stylesheet" />
-    <style>
-      :root {
-        --ink: #eef4f8;
-        --paper: #ffffff;
-        --text: #0b1f33;
-        --muted: #4a657c;
-        --faint: #7a93a8;
-        --line: rgba(11, 31, 51, 0.10);
-        --water: #1a6fb5;
-        --water-2: #7eb6e0;
-        --leak: #c45a3c;
-        --ok: #2f7f9a;
-        --track: #d7e7f2;
-        --serif: "Instrument Serif", Georgia, serif;
-        --sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-        --mono: "IBM Plex Mono", ui-monospace, monospace;
-      }
-      * { box-sizing: border-box; }
-      html, body {
-        margin: 0; min-height: 100%; background: var(--ink); color: var(--text);
-        font-family: var(--sans); -webkit-font-smoothing: antialiased; overflow-x: clip;
-      }
-      button { font: inherit; color: inherit; }
-      button:focus-visible { outline: 2px solid var(--water); outline-offset: 2px; }
-      .wrap { width: min(720px, calc(100% - 32px)); margin: 0 auto; }
-      header.top {
-        padding: calc(12px + env(safe-area-inset-top)) 0 12px;
-        background: rgba(238, 244, 248, 0.72);
-        backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-        position: sticky; top: 0; z-index: 8;
-      }
-      header.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-      .brand-name { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; }
-      .brand-name span {
-        display: block; font-family: var(--serif); font-style: italic; font-weight: 400;
-        font-size: 13px; color: var(--muted);
-      }
-      .toolbar { display: flex; gap: 6px; flex: none; }
-      .lang, .gate {
-        display: flex; align-items: center; min-height: 30px;
-        border: 1px solid var(--line); background: var(--paper); border-radius: 999px;
-      }
-      .lang button {
-        appearance: none; border: 0; background: transparent; min-width: 36px; min-height: 30px;
-        font-size: 10px; font-weight: 600; letter-spacing: 0.12em; color: var(--faint); border-radius: 999px;
-      }
-      .lang button[aria-pressed="true"] { background: var(--water); color: #fff; }
-      .gate {
-        padding: 0 10px; gap: 6px; font-size: 10px; letter-spacing: 0.12em;
-        text-transform: uppercase; color: var(--muted); white-space: nowrap;
-      }
-      .gate-dot { width: 6px; height: 6px; border-radius: 50%; background: #3d9a78; flex: none; }
-      .hero { padding: 8px 0 4px; }
-      .hero-kicker {
-        margin: 0 0 6px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
-        color: var(--water); font-weight: 600;
-      }
-      .hero h1 { margin: 0 0 8px; font-size: 34px; line-height: 1.05; letter-spacing: -0.04em; font-weight: 600; }
-      .ring-wrap { position: relative; width: min(280px, 78vw); margin: 8px auto 6px; }
-      .ring-wrap svg { display: block; width: 100%; height: auto; }
-      .ring-center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
-      .ring-center strong { font-size: 40px; font-weight: 600; letter-spacing: -0.05em; line-height: 1; }
-      .ring-center span { margin-top: 4px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
-      .hero-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 10px 0 16px; border-top: 1px solid var(--line); }
-      .hero-stats div { padding: 14px 8px 4px 0; }
-      .hero-stats div + div { padding-left: 16px; border-left: 1px solid var(--line); }
-      .hero-stats dt { margin: 0; font-size: 11px; color: var(--faint); }
-      .hero-stats dd { margin: 2px 0 0; font-size: 44px; font-weight: 600; letter-spacing: -0.05em; line-height: 1; }
-      .cycle { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0 0 18px; }
-      .cycle button {
-        appearance: none; border: 1px solid var(--line); background: var(--paper); border-radius: 999px;
-        min-height: 34px; padding: 0 6px; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
-      }
-      .cycle button.is-on { background: var(--water); border-color: var(--water); color: #fff; }
-      .cycle button.is-alarm { background: var(--leak); border-color: var(--leak); color: #fff; }
-      .sim { margin: 0 0 14px; font-size: 12px; line-height: 1.45; color: var(--faint); }
-      .banner { margin: 0 0 14px; padding: 12px 14px; border-radius: 16px; background: rgba(196, 90, 60, 0.08); color: #7a2e1f; }
-      .banner strong { display: block; font-weight: 600; font-size: 13px; }
-      .banner span { display: block; margin-top: 3px; font-size: 12px; color: rgba(122,46,31,.75); }
-      .grid { display: grid; gap: 12px; padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
-      .card {
-        background: rgba(255, 255, 255, 0.74);
-        backdrop-filter: saturate(1.15) blur(18px); -webkit-backdrop-filter: saturate(1.15) blur(18px);
-        border: 1px solid rgba(255, 255, 255, 0.65); border-radius: 22px; padding: 18px 18px 14px; min-width: 0;
-      }
-      .card.is-leak { box-shadow: inset 3px 0 0 var(--leak); }
-      .card.is-water { box-shadow: inset 3px 0 0 var(--water); }
-      .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
-      .card-head h2 { margin: 0; font-family: var(--serif); font-style: normal; font-weight: 400; font-size: 26px; line-height: 1.1; letter-spacing: -0.03em; }
-      .card-head .id { margin: 4px 0 0; font-family: var(--mono); font-size: 10px; color: var(--faint); }
-      .status { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
-      .status i { display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--ok); }
-      .status.watering i { background: var(--water); }
-      .status.leak i { background: var(--leak); }
-      .hero-metric { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 4px 0 8px; }
-      .hero-metric .num { font-size: 48px; font-weight: 600; letter-spacing: -0.05em; line-height: 0.9; }
-      .hero-metric .num.hot { color: var(--leak); }
-      .hero-metric .unit { display: block; margin-top: 6px; font-size: 11px; font-weight: 400; color: var(--faint); letter-spacing: 0.08em; text-transform: uppercase; }
-      .spark-wrap { width: 42%; flex: none; }
-      .spark-wrap svg { display: block; width: 100%; height: 48px; }
-      .metrics { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); margin-top: 6px; }
-      .metrics div { padding: 12px 0 8px; }
-      .metrics div + div { padding-left: 16px; border-left: 1px solid var(--line); }
-      .metrics dt { margin: 0; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
-      .metrics dd { margin: 4px 0 0; font-size: 20px; font-weight: 600; letter-spacing: -0.03em; }
-      .foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 8px; }
-      .foot p { margin: 0; }
-      .foot .k { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
-      .foot .v { margin-top: 3px; font-size: 13px; }
-      .foot .phase { margin-top: 3px; font-size: 12px; color: var(--water); }
-      .sw { appearance: none; position: relative; width: 52px; height: 32px; border: 0; border-radius: 999px; background: #d3dee8; flex: none; }
-      .sw[aria-pressed="true"] { background: var(--water); }
-      .sw:disabled { opacity: 0.5; }
-      .sw span { position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(11,31,51,.18); transition: transform .2s ease; }
-      .sw[aria-pressed="true"] span { transform: translateX(20px); }
-    </style>
-  </head>
-  <body>
-    <header class="top">
-      <div class="wrap">
-        <p class="brand-name">AquaCivic <span id="brand-sub">Dos dados ao painel</span></p>
-        <div class="toolbar">
-          <div class="lang" role="group" aria-label="Language">
-            <button type="button" data-lang="pt" aria-pressed="true">PT</button>
-            <button type="button" data-lang="en" aria-pressed="false">EN</button>
-          </div>
-          <div class="gate" title="Gateway online · LoRaWAN Class C">
-            <span class="gate-dot"></span>
-            <span id="gate-label">GW · LoRa C</span>
-          </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#eef4f8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="AquaCivic" />
+  <title>AquaCivic · Dos dados ao painel</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute">
+    <filter id="noise-filter">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+      <feComposite operator="in" in2="SourceGraphic"/>
+    </filter>
+  </svg>
+  <video id="bg-video" autoplay muted loop playsinline
+    src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260514_103318_2aa26b55-df1a-43a6-903d-941e718c9366.mp4"></video>
+
+  <header class="topnav">
+    <div class="avatar mark" aria-hidden="true">AC</div>
+    <div class="toggle-wrap">
+      <button class="mode" id="mode" type="button" aria-label="Tema">
+        <span class="mode-track"><span class="mode-handle" id="mode-icon">☀</span></span>
+      </button>
+      <button class="nav-btn" type="button" id="brand-sub">Dos dados ao painel</button>
+      <div class="lang" role="group" aria-label="Idioma">
+        <button type="button" data-lang="pt" aria-pressed="true">PT</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+    </div>
+    <div class="alert" id="alert">
+      <span id="alert-label">Fuga crítica — caudal > 120 L/min com a válvula fechada</span>
+      <span class="time-tag" id="alert-tag">Rotunda</span>
+      <button class="alert-x" id="alert-x" type="button" aria-label="Fechar">
+        <svg class="ring" viewBox="0 0 32 32" width="32" height="32">
+          <circle cx="16" cy="16" r="14" fill="none" stroke="#e5e7eb" stroke-width="2"/>
+          <circle cx="16" cy="16" r="14" fill="none" stroke="#111" stroke-width="2" stroke-dasharray="88" stroke-dashoffset="25"/>
+        </svg>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="views" role="tablist">
+      <button type="button" data-view="dashboard" aria-pressed="false">Painel</button>
+      <button type="button" class="is-on" data-view="rooms" aria-pressed="true">Sectores</button>
+    </div>
+    <button class="search" type="button" aria-label="Pesquisar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+    </button>
+  </header>
+
+  <section id="view-dashboard" class="dash-view" hidden>
+    <article class="card solid">
+      <p class="sub" id="stat-sectors-l">Sectores</p>
+      <h2 id="stat-sectors">3</h2>
+      <p class="sub" id="stat-faro">Faro · LoRaWAN</p>
+    </article>
+    <article class="card solid">
+      <p class="sub" id="stat-water-l">A regar</p>
+      <h2 id="stat-water">1</h2>
+      <p class="sub" id="stat-water-n">Parque Ribeirinho</p>
+    </article>
+    <article class="card glass glass-dark">
+      <p class="sub" id="stat-leak-l">Fugas</p>
+      <h2 id="stat-leak">1</h2>
+      <p class="sub" id="stat-leak-n">Rotunda do Aeroporto</p>
+    </article>
+    <article class="card solid dash-span">
+      <h2 id="flow24-title">Caudal 24h</h2>
+      <div class="bars" id="bars-dash"></div>
+      <p class="sub" id="flow24-sub">Limiar GSSIC 120 L/min</p>
+    </article>
+    <article class="card solid dash-span">
+      <h2 id="now-title">Agora</h2>
+      <ul class="live" id="live-list"></ul>
+    </article>
+  </section>
+
+  <section class="grid" id="view-rooms">
+    <article class="card create glass">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      <span id="create-label">Adicionar sector</span>
+    </article>
+    <article class="card solid zone-card" id="card-jardim" data-zone="jardim"></article>
+    <article class="card solid">
+      <h2 id="flow24-title-rooms">Caudal 24h</h2>
+      <div class="bars" id="bars"></div>
+      <p class="sub" id="flow24-hint">LoRaWAN · 5 min</p>
+    </article>
+    <article class="card glass glass-dark zone-card" id="card-parque" data-zone="parque"></article>
+    <article class="card solid zone-card" id="card-rotunda" data-zone="rotunda"></article>
+    <article class="card glass glass-dark">
+      <div class="card-head">
+        <div>
+          <h2 id="gate-title">Gateway</h2>
+          <p class="sub" id="gate-sub">GW · LoRa C · online</p>
+        </div>
+        <span class="badge ok">ON</span>
+      </div>
+    </article>
+    <article class="card solid">
+      <div class="card-head">
+        <div>
+          <h2 id="moist-title">Humidade</h2>
+          <p class="sub" id="moist-sub">42% · 55% · 28%</p>
         </div>
       </div>
-    </header>
-    <main class="wrap">
-      <section class="hero">
-        <p id="hero-kicker" class="hero-kicker">Dados em tempo real</p>
-        <h1 id="hero-title">Os sectores</h1>
-        <div class="ring-wrap">
-          <div id="ring"></div>
-          <div class="ring-center">
-            <strong id="ring-num">3</strong>
-            <span id="ring-label">sectores</span>
-          </div>
-        </div>
-        <dl class="hero-stats">
-          <div><dt id="stat-water-l">A regar</dt><dd id="stat-water">1</dd></div>
-          <div><dt id="stat-leak-l">Fugas</dt><dd id="stat-leak">1</dd></div>
-        </dl>
-        <nav class="cycle" id="cycle" aria-label="Cycle"></nav>
-      </section>
-      <p id="sim-note" class="sim"></p>
-      <div id="banner"></div>
-      <section id="grid" class="grid"></section>
-    </main>
-    <script src="/app.js"></script>
-  </body>
+    </article>
+    <article class="card screen solid">
+      <div class="chips">
+        <span class="chip blue" id="over-title">Override</span>
+        <span class="chip" id="over-sub">1s</span>
+      </div>
+      <p class="sub" id="over-hint" style="margin-top:16px">Latência de hardware em cada comando da eletroválvula.</p>
+    </article>
+  </section>
+
+  <div class="dots"><i class="on"></i><i></i><i></i></div>
+
+  <div class="bottom glass" id="bottom-bar">
+    <div class="speaker mark">FAO</div>
+    <div class="gw">GW · LoRa C</div>
+    <div class="parts" id="bottom-zones"></div>
+  </div>
+
+  <button class="comp" type="button" aria-label="AquaCivic">AC</button>
+  <div class="float">
+    <button type="button" id="vid" aria-label="Video">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7 16 12l7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+    </button>
+    <button type="button" id="mic" aria-label="Mic">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+    </button>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
 </html>
